@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Run ESLint
+        run: npm run lint
+      
+      - name: TypeScript type check
+        run: npm run type-check
+      
+      - name: Check for secret leaks in build output
+        run: |
+          npm run build
+          ! grep -r "sk-ant-api" .next/ || (echo "❌ ANTHROPIC_API_KEY found in build output" && exit 1)
+          ! grep -r "sk_test" .next/ || (echo "❌ CLERK_SECRET_KEY found in build output" && exit 1)
+          echo "✅ No secrets found in build output"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Run dissent-preservation guardrail tests (CRITICAL - NON-SKIPPABLE)
+        run: npm run test:run -- src/lib/deliberation
+        env:
+          NODE_ENV: test
+      
+      - name: Run all unit tests
+        run: npm run test:run
+        env:
+          NODE_ENV: test
+
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for committed secrets
+        run: |
+          ! grep -r "sk-ant-api" . --exclude-dir=node_modules --exclude-dir=.git || (echo "❌ Anthropic API key found in repo" && exit 1)
+          ! grep -r "sk_test_" . --exclude-dir=node_modules --exclude-dir=.git || (echo "❌ Clerk secret key found in repo" && exit 1)
+          ! grep -r "postgresql://.*:.*@" . --exclude-dir=node_modules --exclude-dir=.git --exclude="*.example" || (echo "❌ Database URL with password found in repo" && exit 1)
+          echo "✅ No secrets found in repository"

@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgRole {
+  ORG_ADMIN
+  ANALYST
+}
+
+enum DealStatus {
+  INTAKE
+  DELIBERATING
+  MEMO_READY
+  DECIDED
+}
+
+enum ClaimStatus {
+  AGREES
+  DISAGREES
+  UNCERTAIN
+}
+
+enum CrossExamResponseType {
+  CONCEDE
+  PARTIAL_CONCEDE
+  HOLD_POSITION
+}
+
+enum PersonaKey {
+  MARKET_SKEPTIC
+  FINANCIAL_DILIGENCE
+  FOUNDER_TEAM_EVALUATOR
+  RISK_LEGAL_SPECIALIST
+}
+
+model Organization {
+  id           String       @id @default(cuid())
+  clerkOrgId   String       @unique
+  name         String
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  deals        Deal[]
+}
+
+model User {
+  id          String       @id @default(cuid())
+  clerkUserId String       @unique
+  email       String       @unique
+  fullName    String
+  memberships Membership[]
+  createdAt   DateTime     @default(now())
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  role           OrgRole
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+}
+
+model Deal {
+  id               String        @id @default(cuid())
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+  name             String
+  documentBlobUrls String[]
+  extractedText    String?       @db.Text
+  status           DealStatus    @default(INTAKE)
+  deliberation     Deliberation?
+  createdAt        DateTime      @default(now())
+  finalDecision    String?
+  finalDecisionNote String?      @db.Text
+  decidedAt        DateTime?
+
+  @@index([organizationId, status])
+}
+
+model Deliberation {
+  id               String             @id @default(cuid())
+  deal             Deal               @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealId           String             @unique
+  currentRound     Int                @default(0)
+  maxRounds        Int                @default(3)
+  isComplete       Boolean            @default(false)
+  initialPositions InitialPosition[]
+  crossExamTurns   CrossExamTurn[]
+  trackedClaims    TrackedClaim[]
+  memo             DeliberationMemo?
+  startedAt        DateTime           @default(now())
+  completedAt      DateTime?
+}
+
+model InitialPosition {
+  id             String       @id @default(cuid())
+  deliberation   Deliberation @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
+  deliberationId String
+  persona        PersonaKey
+  overallStance  String       @db.Text
+  claims         Json
+  createdAt      DateTime     @default(now())
+
+  @@unique([deliberationId, persona])
+}
+
+model TrackedClaim {
+  id                     String       @id @default(cuid())
+  deliberation           Deliberation @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
+  deliberationId         String
+  claimText              String       @db.Text
+  originPersona          PersonaKey
+  currentStatusByPersona Json
+  isStable               Boolean      @default(false)
+  createdAt              DateTime     @default(now())
+
+  @@index([deliberationId])
+}
+
+model CrossExamTurn {
+  id                 String                 @id @default(cuid())
+  deliberation       Deliberation           @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
+  deliberationId     String
+  roundNumber        Int
+  challengingPersona PersonaKey
+  challengedPersona  PersonaKey
+  targetClaimId      String
+  challengeText      String                 @db.Text
+  responseType       CrossExamResponseType
+  responseText       String                 @db.Text
+  createdAt          DateTime               @default(now())
+
+  @@index([deliberationId, roundNumber])
+}
+
+model DeliberationMemo {
+  id                      String       @id @default(cuid())
+  deliberation            Deliberation @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
+  deliberationId          String       @unique
+  consensusClaims         Json
+  resolvedClaims          Json
+  unresolvedDissentClaims Json
+  overallSynthesis        String       @db.Text
+  createdAt               DateTime     @default(now())
+}
+
+model AuditLogEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}
