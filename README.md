@@ -1,25 +1,25 @@
 # QuorumAI
 
-**Four sharp minds. One honest verdict — dissent included.**
+**When perspectives clash by design.**
 
-QuorumAI is a multi-agent investment committee deliberation platform for solo angel investors, small fund GPs, and lean venture teams. Upload real deal materials, and four distinct AI committee personas independently analyze from genuinely different analytical lenses, cross-examine each other's specific claims across multiple rounds, and produce a structured memo that explicitly preserves genuine disagreement rather than averaging it away into false consensus.
+QuorumAI helps solo investors and small funds analyze deals through multiple specialized viewpoints. Upload pitch materials, and four analyst personas examine the opportunity from distinct angles — market viability, financial health, team capability, and structural risk. They debate specific points across several rounds, and the platform delivers a report showing where they align and where they split, without forcing artificial agreement.
 
 ## The Core Innovation
 
-Unlike typical AI deal-analysis tools that provide one model's single opinion, QuorumAI reproduces the real value of an investment committee: **productive friction between genuinely different analytical perspectives**.
+Standard analysis tools provide one model's single viewpoint. QuorumAI reproduces the value of multiple perspectives through debate between specialized analyst roles.
 
-Four fixed personas:
-- **Market Skeptic** - Challenges market sizing, competitive landscape, demand assumptions
-- **Financial Diligence Specialist** - Scrutinizes unit economics, projections, internal consistency
-- **Founder & Team Evaluator** - Assesses founder-market fit, track record, team gaps
-- **Risk & Legal Specialist** - Identifies structural, regulatory, IP, and deal-term risks
+Four analyst types:
+- **Market Analyst** - Questions sizing claims, competitive position, demand evidence
+- **Finance Specialist** - Examines economics, projections, calculation consistency  
+- **Team Evaluator** - Reviews founder background, execution history, organizational structure
+- **Risk Assessor** - Identifies regulatory exposure, structural concerns, legal complexity
 
-The platform's output is NOT a single blended recommendation. It's a real, structured memo showing:
-- **Consensus** - Claims all four personas agree on
-- **Resolved** - Claims where personas conceded during cross-examination (with reasoning preserved)
-- **Unresolved Dissent** - Genuine disagreement that survived scrutiny, with all distinct positions shown verbatim
+The output preserves distinct viewpoints rather than blending them:
+- **Aligned findings** - Points where all analysts agree
+- **Resolved debates** - Claims where an analyst conceded after examination
+- **Unresolved splits** - Genuine disagreement that survived scrutiny, with each position shown separately
 
-**Dissent is a first-class, persisted data structure, never averaged away.**
+**Conflict becomes structured data, not something to eliminate.**
 
 ## Tech Stack
 
@@ -37,9 +37,9 @@ The platform's output is NOT a single blended recommendation. It's a real, struc
 ### Prerequisites
 
 - Node.js 20.x or higher
-- npm or pnpm
+- npm package manager
 - PostgreSQL database (Neon recommended)
-- Anthropic API key
+- Anthropic API access
 - Clerk account
 - Vercel Blob storage
 - Inngest account
@@ -62,16 +62,16 @@ npm install
 cp .env.example .env
 ```
 
-Required environment variables:
-- `DATABASE_URL` - Neon PostgreSQL connection string
-- `ANTHROPIC_API_KEY` - Claude API key
-- `CLERK_SECRET_KEY` - Clerk secret key
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
-- `CLERK_WEBHOOK_SIGNING_SECRET` - Clerk webhook secret
-- `BLOB_READ_WRITE_TOKEN` - Vercel Blob token
-- `RESEND_API_KEY` - Resend email API key
-- `INNGEST_EVENT_KEY` - Inngest event key
-- `INNGEST_SIGNING_KEY` - Inngest signing key
+Required variables:
+- `DATABASE_URL` - Neon PostgreSQL connection
+- `ANTHROPIC_API_KEY` - Claude API access
+- `CLERK_SECRET_KEY` - Authentication
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Client auth
+- `CLERK_WEBHOOK_SIGNING_SECRET` - Webhook validation
+- `BLOB_READ_WRITE_TOKEN` - File storage
+- `RESEND_API_KEY` - Email delivery
+- `INNGEST_EVENT_KEY` - Background jobs
+- `INNGEST_SIGNING_KEY` - Job validation
 
 4. Set up the database:
 ```bash
@@ -83,7 +83,7 @@ npm run db:push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the application.
+Open [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
@@ -123,30 +123,30 @@ quorumai/
 ## Key Features
 
 ### 1. Deal Intake
-Upload real pitch decks (PDF) and supporting financial documents. Automatic text extraction with honest "scanned image" fallback.
+Upload pitch decks (PDF) and supporting documents. Text extraction handles standard formats with clear notification when scanned images need manual entry.
 
-### 2. Live Deliberation Feed
-Watch the committee debate unfold in real-time (SSE). See initial positions, then each cross-examination round's genuine challenges and responses.
+### 2. Live Analysis Feed
+Watch the review unfold in sequence: initial positions from each analyst, then challenge rounds where they examine each other's reasoning.
 
-### 3. Final Memo & Dissent
-Structured output showing consensus, resolved concessions, and **genuine unresolved disagreement** preserved verbatim - never blended into false consensus.
+### 3. Final Report Structure
+The output separates consensus points, resolved debates, and persistent disagreement. When analysts reach different conclusions after examination, both positions appear with their supporting logic.
 
 ### 4. PDF Export
-Export complete memo with dissent structure intact for sharing with co-investors or LPs.
+Download the complete report with the same structural separation intact.
 
-### 5. Deal-Flow Analytics
-Track deliberations run, average rounds to stability, and dissent rate (% of deliberations with unresolved disagreement).
+### 5. Analysis Metrics
+Track reviews over time, average rounds to resolution, and frequency of unresolved splits across your deal pipeline.
 
-## The Dissent-Preservation Guardrail
+## The Conflict Validation Layer
 
-The product's entire value rests on one promise: when personas genuinely disagree after real scrutiny, the final memo shows that disagreement honestly.
+The platform includes a validation step that checks synthesis output against underlying analyst positions. This prevents the system from smoothing over actual disagreement.
 
-`src/lib/deliberation/validateDissentPreservation.ts` is the critical guardrail that:
-1. Validates AI synthesis output against raw tracked claim data
-2. Rejects any synthesis that collapses genuine disagreement into false consensus
-3. Falls back to mechanical generation if AI synthesis fails validation twice
+`src/lib/deliberation/validateDissentPreservation.ts` performs this check:
+1. Compares synthesis output to raw analyst position data
+2. Rejects output that collapses distinct viewpoints into single statements
+3. Falls back to mechanical generation if synthesis fails validation twice
 
-This deterministic validation ensures dissent is structurally difficult to fabricate away.
+This structural approach makes it difficult to accidentally eliminate conflict information.
 
 ## Development
 
